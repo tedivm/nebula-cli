@@ -16,7 +16,7 @@ except(IOError, ImportError):
 version = '0.1.0'
 setup(
 
-  name = 'mebulacli',
+  name = 'nebulacli',
 
   version = version,
   py_modules=['nebulacli'],
@@ -27,8 +27,8 @@ setup(
 
   author = 'Robert Hafner',
   author_email = 'tedivm@tedivm.com',
-  url = 'https://github.com/tedivm/mebula-cli',
-  download_url = "https://github.com/tedivm/mebula-cli/archive/v%s.tar.gz" % (version),
+  url = 'https://github.com/tedivm/nebula-cli',
+  download_url = "https://github.com/tedivm/nebula-cli/archive/v%s.tar.gz" % (version),
   keywords = '',
 
   classifiers = [
