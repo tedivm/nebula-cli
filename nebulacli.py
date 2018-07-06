@@ -87,18 +87,18 @@ def get_authentication_token():
     if not config_string:
         raise RuntimeError('Unable to load configuration file.')
 
-    token_pattern = r'^token=([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$'
+    token_pattern = r'^\s*token\s*=\s*([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})'
     token_match = re.search(token_pattern, config_string, flags=re.M)
     if not token_match:
         raise RuntimeError('Configuration file has no token.')
     token = token_match.group(1)
 
-    token_id_match = re.search(r'^token_id=([0-9a-f]{12})$', config_string, flags=re.M)
+    token_id_match = re.search(r'^\s*token_id\s*=\s*([0-9a-f]{12})', config_string, flags=re.M)
     if not token_id_match:
         raise RuntimeError('Configuration file has no token_id.')
     token_id = token_id_match.group(1)
 
-    install_url_match = re.search(r'^url=(.*)$', config_string, flags=re.M)
+    install_url_match = re.search(r'^\s*url\s*=\s*(\S+)', config_string, flags=re.M)
     if not install_url_match:
         raise RuntimeError('Configuration file has no URL.')
     install_url = install_url_match.group(1)
