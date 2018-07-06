@@ -117,7 +117,7 @@ def load_config_from_path(file):
 def get_instance_id():
     r = requests.get('http://169.254.169.254/latest/meta-data/instance-id')
     r.raise_for_status()
-    return t.text
+    return r.text
 
 
 if __name__ == '__main__':
