@@ -2,6 +2,9 @@ import click
 import os
 import re
 import requests
+import shutil
+import subprocess
+import time
 
 
 @click.group()
@@ -19,7 +22,7 @@ def set_name(name, instance_id):
     if not instance_id:
         instance_id = get_instance_id()
     url = 'api/instances/%s/name' % instance_id
-    results = api_call(url, post_data={'name':name})
+    results = api_call(url, put_data={'name':name})
 
 
 # Set Status
@@ -30,7 +33,7 @@ def set_status(status, instance_id):
     if not instance_id:
         instance_id = get_instance_id()
     url = 'api/instances/%s/status' % instance_id
-    results = api_call(url, post_data={'status':status})
+    results = api_call(url, put_data={'status':status})
 
 
 # Get User
@@ -61,8 +64,35 @@ def get_ssh_key():
     pass
 
 
+@cli.command(short_help="")
+def gpu_utilization():
+    utilization = get_gpu_utilization()
+    if not utilization:
+        click.echo('No GPUs detected.')
+        return
+    click.echo(get_gpu_utilization())
 
-def api_call(route, post_data=False):
+
+@cli.command(short_help="")
+def disk_utilization():
+    click.echo(get_disk_utilization())
+
+
+@cli.command(short_help="Sends statistics, such as GPU Utilization, to Nebula")
+@click.option('--instance_id', default=False)
+def send_stats(instance_id):
+    if not instance_id:
+        instance_id = get_instance_id()
+    disk_utilization = get_disk_utilization()
+    gpu_utilization = get_gpu_utilization_polled()
+    url = 'api/instances/%s/stats' % instance_id
+    results = api_call(url, post_data={
+        'gpu_utilization': gpu_utilization,
+        'disk_utilization': disk_utilization})
+
+
+
+def api_call(route, put_data=False, post_data=False):
     url, id, token = get_authentication_token()
     full_url = "%s/%s" % (url, route)
     headers = {
@@ -70,8 +100,11 @@ def api_call(route, post_data=False):
         'id': id,
         'token': token
     }
+
     if post_data:
         r = requests.put(full_url, headers=headers, data=post_data)
+    elif put_data:
+        r = requests.put(full_url, headers=headers, data=put_data)
     else:
         r = requests.get(full_url, headers=headers)
     r.raise_for_status()
@@ -118,6 +151,54 @@ def get_instance_id():
     r = requests.get('http://169.254.169.254/latest/meta-data/instance-id')
     r.raise_for_status()
     return r.text
+
+
+def get_gpu_utilization_polled(attempts=3):
+    gpu_stats = []
+    for x in xrange(attempts):
+        utilization = get_gpu_utilization()
+        if not utilization:
+            return False
+        gpu_stats.append(utilization)
+        time.sleep(0.05)
+
+    gpu_utilization = False
+    if len(gpu_stats) > 0:
+        total = sum(gpu_stats)
+        if total == 0:
+            gpu_utilization = 0
+        else:
+            gpu_utilization = sum(gpu_stats) / len(gpu_stats)
+
+    return gpu_utilization
+
+
+def get_gpu_utilization():
+    # If nvidia-smi isn't here there are no GPUs
+    which_result = subprocess.run(['which', 'nvidia-smi'], stdout=subprocess.PIPE)
+    if which_result.returncode != 0:
+        return False
+
+    command = 'nvidia-smi --query-gpu=utilization.gpu --format=csv'
+    result = subprocess.run(command.split(' '), stdout=subprocess.PIPE)
+    util_strings = result.stdout.decode("utf-8").replace(' %', '').strip().split('\n')[1:]
+    util_numbers = [int(n) for n in util_strings if n]
+
+    # No GPUs detected
+    if len(util_numbers) < 1:
+        return False
+
+    total = sum(util_numbers)
+    if total <= 0:
+        return 0
+
+    return total/float(len(util_numbers))
+
+
+def get_disk_utilization():
+    usage = shutil.disk_usage('/')
+    return usage.used/usage.total
+
 
 
 if __name__ == '__main__':
