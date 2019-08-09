@@ -6,12 +6,6 @@ from os import path
 
 here = path.abspath(path.dirname(__file__))
 
-try:
-    import pypandoc
-    long_description = pypandoc.convert('README.md', 'rst')
-except(IOError, ImportError):
-    long_description = open('README.md').read()
-
 
 version = '0.3.0'
 setup(
@@ -22,7 +16,8 @@ setup(
   py_modules=['nebulacli'],
 
   description = '',
-  long_description=long_description,
+  long_description=open('README.md').read(),
+  long_description_content_type="text/markdown",
   python_requires='>=3',
 
   author = 'Robert Hafner',
@@ -48,7 +43,6 @@ setup(
 
   extras_require={
     'dev': [
-      'pypandoc',
       'twine',
       'wheel'
     ],
