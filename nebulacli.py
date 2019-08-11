@@ -67,10 +67,10 @@ def get_ssh_key():
 @cli.command(short_help="")
 def gpu_utilization():
     utilization = get_gpu_utilization()
-    if not utilization:
+    if utilization is False:
         click.echo('No GPUs detected.')
         return
-    click.echo(get_gpu_utilization())
+    click.echo(utilization)
 
 
 @cli.command(short_help="")
@@ -155,7 +155,7 @@ def get_instance_id():
 
 def get_gpu_utilization_polled(attempts=3):
     gpu_stats = []
-    for x in xrange(attempts):
+    for x in range(attempts):
         utilization = get_gpu_utilization()
         if not utilization:
             return False
