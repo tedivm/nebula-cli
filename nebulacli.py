@@ -157,7 +157,7 @@ def get_gpu_utilization_polled(attempts=3):
     gpu_stats = []
     for x in range(attempts):
         utilization = get_gpu_utilization()
-        if not utilization:
+        if utilization is False:
             return False
         gpu_stats.append(utilization)
         time.sleep(0.05)

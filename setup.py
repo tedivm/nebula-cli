@@ -7,7 +7,7 @@ from os import path
 here = path.abspath(path.dirname(__file__))
 
 
-version = '0.3.1'
+version = '0.3.2'
 setup(
 
   name = 'nebulacli',
