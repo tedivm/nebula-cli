@@ -148,7 +148,18 @@ def load_config_from_path(file):
 
 
 def get_instance_id():
-    r = requests.get('http://169.254.169.254/latest/meta-data/instance-id')
+    ec2_instance_id_metadata_url = 'http://169.254.169.254/latest/meta-data/instance-id'
+
+    r = requests.get(ec2_instance_id_metadata_url)
+    if r.status_code == 401:  # IMDSv1 might be disabled, try IMDSv2
+        imdsv2_token_url = 'http://169.254.169.254/latest/api/token'
+        token_request_headers = {'X-aws-ec2-metadata-token-ttl-seconds': '21600'}
+        t = requests.put(imdsv2_token_url, headers=token_request_headers)
+        t.raise_for_status()
+        imdsv2_token = t.text
+
+        metadata_request_headers = {'X-aws-ec2-metadata-token': imdsv2_token}
+        r = requests.get(ec2_instance_id_metadata_url, headers=metadata_request_headers)
     r.raise_for_status()
     return r.text
 
